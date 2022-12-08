@@ -1,8 +1,8 @@
-﻿using Harmony;
+﻿using CitiesHarmony.API;
+using HarmonyLib;
 using ICities;
 using System;
 using System.IO;
-using System.Reflection;
 using UnityEngine;
 
 namespace RemoveNeedForPowerLines
@@ -39,6 +39,30 @@ namespace RemoveNeedForPowerLines
         }
     }
 
+    public static class Patcher
+    {
+        private const string HarmonyId = "Overhatted.RemoveNeedForPowerLines";
+        private static bool patched = false;
+
+        public static void PatchAll()
+        {
+            if (patched) return;
+
+            patched = true;
+            var harmony = new Harmony(HarmonyId);
+            harmony.PatchAll(typeof(Patcher).Assembly);
+        }
+
+        public static void UnpatchAll()
+        {
+            if (!patched) return;
+
+            var harmony = new Harmony(HarmonyId);
+            harmony.UnpatchAll(HarmonyId);
+            patched = false;
+        }
+    }
+
     public class Loader : ILoadingExtension
     {
         public void OnCreated(ILoading loading)
@@ -47,13 +71,12 @@ namespace RemoveNeedForPowerLines
             Helper.PrintError("");
 #endif
 
-            var harmony = HarmonyInstance.Create("com.overhatted.removeneedforpowerlines");
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
+            if (HarmonyHelper.IsHarmonyInstalled) Patcher.PatchAll();
         }
 
         public void OnReleased()
         {
-
+            if (HarmonyHelper.IsHarmonyInstalled) Patcher.UnpatchAll();
         }
 
         public void OnLevelLoaded(LoadMode mode)
@@ -63,7 +86,7 @@ namespace RemoveNeedForPowerLines
 
         public void OnLevelUnloading()
         {
-            
+
         }
     }
 }
